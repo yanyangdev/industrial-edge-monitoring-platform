@@ -77,10 +77,10 @@ PostgreSQL → React Dashboard
 
 ## Current Status
 
-- - [x] Week 1: PLC + OPC UA + Edge
-- - [ ] Week 2: MQTT distributed architecture
-- - [ ] Week 3: Database + REST + Docker
-- - [ ] Week 4: Real-time dashboard + KPI + stability test
+- - [x] 1: PLC + OPC UA + Edge
+- - [ ] 2: MQTT distributed architecture
+- - [ ] 3: Database + REST + Docker
+- - [ ] 4: Real-time dashboard + KPI + stability test
 
 ## Planned Documentation
 
@@ -99,4 +99,3 @@ PostgreSQL → React Dashboard
 - More advanced alarm model
 - Edge buffering during broker downtime
 - CI pipeline for backend/frontend
-
