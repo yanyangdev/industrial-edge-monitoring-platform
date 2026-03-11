@@ -12,3 +12,11 @@ export type NodeIds = {
   Status: string;
   Error: string;
 };
+
+export type MachineState =
+  | "Idle"
+  | "Starting"
+  | "Running"
+  | "Error"
+  | "Unknown";
+// 0=Idle, 1 = Starting, 2 = Running, 3=Error

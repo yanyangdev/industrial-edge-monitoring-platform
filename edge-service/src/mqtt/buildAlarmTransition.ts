@@ -1,0 +1,86 @@
+import type { NormalizeSnapshot } from "../services/opcua/types.ts";
+import type { AlarmCode, AlarmPayload } from "../types/mqttPayload.ts";
+import { nextSequence } from "../utils/index.ts";
+
+// 用于报警去重/状态反转
+const alarmState: Record<AlarmCode, boolean> = {
+  HIGH_TEMP: false,
+  MACHINE_ERROR: false,
+  BAD_QUALITY: false,
+  STALE_DATA: false,
+};
+const HIGH_TEMP_THRESHOLD = 80;
+
+export const buildAlarmTransition = (
+  snapshot: NormalizeSnapshot,
+): AlarmPayload[] => {
+  const alarms: AlarmPayload[] = [];
+
+  const conditions: Array<{
+    code: AlarmCode;
+    active: boolean;
+    severity: AlarmPayload["alarm"]["severity"];
+    message: string;
+    value: number | boolean | string | null;
+    threshold?: number;
+  }> = [
+    {
+      code: "HIGH_TEMP",
+      active:
+        snapshot.temperature !== null &&
+        snapshot.temperature > HIGH_TEMP_THRESHOLD,
+      severity: "HIGH",
+      message: `Temperature above threshold ${HIGH_TEMP_THRESHOLD}`,
+      value: snapshot.temperature,
+      threshold: HIGH_TEMP_THRESHOLD,
+    },
+    {
+      code: "MACHINE_ERROR",
+      active: snapshot.machineState === "Error" || snapshot.error === true,
+      severity: "CRITICAL",
+      message: `Machine entered error state`,
+      value: snapshot.machineState,
+    },
+    {
+      code: "BAD_QUALITY",
+      active: Object.values(snapshot.quality).some((q) => q !== "Good"),
+      severity: "MEDIUM",
+      message: `One or more OPC UA values have bad/unknown quality`,
+      value: JSON.stringify(snapshot.quality),
+    },
+    {
+      code: "STALE_DATA",
+      active: Object.values(snapshot.staleFlag).some(Boolean),
+      severity: "MEDIUM",
+      message: `One or more OPC UA values are stale`,
+      value: JSON.stringify(snapshot.staleFlag),
+    },
+  ];
+
+  for (const condition of conditions) {
+    const prev = alarmState[condition.code];
+    if (prev !== condition.active) {
+      alarmState[condition.code] = condition.active;
+    }
+    const alarm: AlarmPayload["alarm"] = {
+      code: condition.code,
+      severity: condition.severity,
+      message: condition.message,
+      active: condition.active,
+      value: condition.value,
+      // threshold: condition.threshold,
+      sourceTimestamp: snapshot.opcTimestamp,
+    };
+    if (condition.threshold !== undefined) {
+      alarm.threshold = condition.threshold;
+    }
+    alarms.push({
+      timestamp: snapshot.edgeTimestamp,
+      machineId: snapshot.machineId,
+      messageType: "alarm",
+      sequence: nextSequence(),
+      alarm,
+    });
+  }
+  return alarms;
+};

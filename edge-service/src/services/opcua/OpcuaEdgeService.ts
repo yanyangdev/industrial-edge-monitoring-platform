@@ -20,10 +20,13 @@ import type {
   SecurityPolicyString,
   Key,
 } from "../../config/index.ts";
-import type { LatestSnapshot } from "./types.ts";
+import type { OpcSnapshot, OpcUaValue } from "./types.ts";
 import { logger } from "../../logger/index.ts";
 import { AppError } from "../../errors/AppError.ts";
 import { HealthReport } from "../health/HealthReporter.ts";
+import { publishMachineData } from "../publishMachineData.ts";
+import { normalizeOpcSnapshot } from "./normalizer.ts";
+import { mqttConfig } from "../../config/mqtt.ts";
 
 const securityModeMap: Record<SecurityModeString, MessageSecurityMode> = {
   None: MessageSecurityMode.None,
@@ -63,12 +66,32 @@ export class OpcuaEdgeService {
     emitTimer: null,
     monitoredGroup: null,
   };
-  // 内存里的最新快照("变化驱动更新+定时输出")
-  private latest: LatestSnapshot = {
-    Temperature: { value: null },
-    Vibration: { value: null },
-    Status: { value: null },
-    Error: { value: null },
+
+  private latest: OpcSnapshot = {
+    Temperature: {
+      value: null,
+      quality: "Unknown",
+      statusCode: "Unknown",
+      stale: false,
+    },
+    Vibration: {
+      value: null,
+      quality: "Unknown",
+      statusCode: "Unknown",
+      stale: false,
+    },
+    Status: {
+      value: null,
+      quality: "Unknown",
+      statusCode: "Unknown",
+      stale: false,
+    },
+    Error: {
+      value: null,
+      quality: "Unknown",
+      statusCode: "Unknown",
+      stale: false,
+    },
   };
 
   private dirty = false;
@@ -83,12 +106,6 @@ export class OpcuaEdgeService {
   private rebuildAttempt = 0;
   private rebuildTimer: NodeJS.Timeout | null = null;
 
-  private quality: Record<Key, "Good" | "Bad" | "Unknown"> = {
-    Temperature: "Unknown",
-    Vibration: "Unknown",
-    Status: "Unknown",
-    Error: "Unknown",
-  };
   async start() {
     this.attachClientEvents();
     // health report
@@ -110,26 +127,25 @@ export class OpcuaEdgeService {
       if (!this.dirty) return;
 
       const now = Date.now();
-      const dataWithAge = Object.fromEntries(
-        (Object.keys(this.latest) as Key[]).map((k) => {
-          const p = this.latest[k];
-          const ageMs = p.sourceTimestamp
-            ? now - p.sourceTimestamp.getTime()
-            : null;
-          const stale = ageMs !== null ? ageMs > 3000 : true; // 你也可以放进 config
-          return [k, { ...p, ageMs, stale, quality: this.quality[k] }];
-        }),
-      );
+      const enrich = <T>(p: OpcUaValue<T>): OpcUaValue<T> => {
+        const ageMs = p.sourceTimestamp
+          ? now - p.sourceTimestamp.getTime()
+          : null;
+        const stale = ageMs !== null ? ageMs > 3000 : true;
+        return { ...p, ageMs, stale };
+      };
 
+      const dataWithAge: OpcSnapshot = {
+        Temperature: enrich(this.latest.Temperature),
+        Vibration: enrich(this.latest.Vibration),
+        Status: enrich(this.latest.Status),
+        Error: enrich(this.latest.Error),
+      };
+      const ts = new Date().toISOString();
       logger.info(
-        { ts: new Date().toISOString(), data: dataWithAge },
+        { ts, data: normalizeOpcSnapshot(ts, dataWithAge, mqttConfig.machine) },
         "machine snapshot",
       );
-      // const snapshot = {
-      //   ts: new Date().toISOString(),
-      //   data: { ...this.latest },
-      // };
-      // logger.info(snapshot, "machine snapshot");
       this.dirty = false;
     }, config.output.emitIntervalMs);
 
@@ -141,7 +157,7 @@ export class OpcuaEdgeService {
     logger.info("OPCUA edge service stopping...");
 
     if (this.rebuildTimer) {
-      clearInterval(this.rebuildTimer);
+      clearTimeout(this.rebuildTimer);
       this.rebuildTimer = null;
     }
 
@@ -196,7 +212,7 @@ export class OpcuaEdgeService {
     const wait = this.rebuildAttempt === 0 ? 0 : delayMs + jitter;
 
     logger.warn(
-      { reason, waitMs: wait, attemp: this.rebuildAttempt },
+      { reason, waitMs: wait, attempt: this.rebuildAttempt },
       "Schedule OPCUA rebuild",
     );
 
@@ -279,12 +295,12 @@ export class OpcuaEdgeService {
         this.scheduleRebuild("subscription_terminated");
       });
 
-    await this.createMonitoredItenGroup(sub);
+    await this.createMonitoredItemGroup(sub);
 
     this.dirty = false;
     logger.info("OPCUA pipeline ready");
   }
-  private async createMonitoredItenGroup(sub: ClientSubscription) {
+  private async createMonitoredItemGroup(sub: ClientSubscription) {
     // throw new Error("Method not implemented.");
     // 固定顺序非常重要: index -> key
     const keys = Object.keys(config.opcua.nodeIds) as Key[];
@@ -335,13 +351,14 @@ export class OpcuaEdgeService {
           const nodeId = config.opcua.nodeIds[key];
 
           const isGood = dv.statusCode === StatusCodes.Good;
-          this.quality[key] = isGood ? "Good" : "Bad";
           if (!isGood) this.badCount += 1;
 
           this.latest[key] = {
+            ...this.latest[key],
             value: dv.value?.value,
             sourceTimestamp: dv.sourceTimestamp ?? null,
-            serverTimestemp: dv.serverTimestamp ?? null,
+            serverTimestamp: dv.serverTimestamp ?? null,
+            quality: isGood ? "Good" : "Bad",
             statusCode: dv.statusCode?.toString(),
           };
           this.latestDataTs = new Date().toISOString();
@@ -361,6 +378,7 @@ export class OpcuaEdgeService {
       { items: keys.map((k) => ({ k, nodeId: config.opcua.nodeIds[k] })) },
       "Monitoring Items in group",
     );
+    // publishMachineData(this.latest);
   }
 
   private async teardown(reason: string) {
@@ -371,7 +389,7 @@ export class OpcuaEdgeService {
       if (g?.terminate) await g.terminate();
       else if (g?.dispose) await g.dispose();
     } catch (error) {
-      logger.warn({ e: String(error) }, "Terminate Monitore group ignored");
+      logger.warn({ e: String(error) }, "Terminate Monitored group ignored");
     } finally {
       this.state.monitoredGroup = null;
     }
