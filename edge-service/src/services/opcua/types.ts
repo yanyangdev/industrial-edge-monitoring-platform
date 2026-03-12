@@ -1,4 +1,4 @@
-import type { MachineState } from "../../types/machine.ts";
+import type { MachineState } from "../../types/machine.js";
 export type QualityFlags = {
   temperature: string;
   vibration: string;

@@ -1,4 +1,4 @@
-import { logger } from "../logger/index.ts";
+import { logger } from "../logger/index.js";
 import {
   buildTelemetryPayload,
   publishAlarm,
@@ -6,8 +6,8 @@ import {
   publishTelemetry,
   buildAlarmTransition,
   buildStatePayload,
-} from "../mqtt/index.ts";
-import type { NormalizeSnapshot } from "./opcua/types.ts";
+} from "../mqtt/index.js";
+import type { NormalizeSnapshot } from "./opcua/types.js";
 
 type PublishMachineDataType = {
   snapshot: NormalizeSnapshot;
@@ -20,6 +20,11 @@ export const publishMachineData = ({
   isConnectedOpc,
   isConnectedMqtt,
 }: PublishMachineDataType): void => {
+  logger.info(
+    { snapshot, isConnectedOpc, isConnectedMqtt },
+    "publishMachineData invoked",
+  );
+
   // 1. telemetry
   const telemetryPayload = buildTelemetryPayload(snapshot);
   publishTelemetry(telemetryPayload);

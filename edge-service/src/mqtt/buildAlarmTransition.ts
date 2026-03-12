@@ -1,14 +1,15 @@
-import type { NormalizeSnapshot } from "../services/opcua/types.ts";
-import type { AlarmCode, AlarmPayload } from "../types/mqttPayload.ts";
-import { nextSequence } from "../utils/index.ts";
+import type { NormalizeSnapshot } from "../services/opcua/types.js";
+import type { AlarmCode, AlarmPayload } from "../types/mqttPayload.js";
+import { nextSequence } from "../utils/index.js";
 
 // 用于报警去重/状态反转
-const alarmState: Record<AlarmCode, boolean> = {
-  HIGH_TEMP: false,
-  MACHINE_ERROR: false,
-  BAD_QUALITY: false,
-  STALE_DATA: false,
-};
+// const alarmState: Record<AlarmCode, boolean> = {
+// HIGH_TEMP: false,
+// MACHINE_ERROR: false,
+// BAD_QUALITY: false,
+// STALE_DATA: false,
+// };
+const alarmState: Record<string, boolean> = {};
 const HIGH_TEMP_THRESHOLD = 80;
 
 export const buildAlarmTransition = (
@@ -21,7 +22,7 @@ export const buildAlarmTransition = (
     active: boolean;
     severity: AlarmPayload["alarm"]["severity"];
     message: string;
-    value: number | boolean | string | null;
+    value: number | boolean | string | null | Record<string, unknown>;
     threshold?: number;
   }> = [
     {
@@ -39,29 +40,31 @@ export const buildAlarmTransition = (
       active: snapshot.machineState === "Error" || snapshot.error === true,
       severity: "CRITICAL",
       message: `Machine entered error state`,
-      value: snapshot.machineState,
+      value: { machineState: snapshot.machineState, error: snapshot.error },
     },
     {
       code: "BAD_QUALITY",
       active: Object.values(snapshot.quality).some((q) => q !== "Good"),
       severity: "MEDIUM",
       message: `One or more OPC UA values have bad/unknown quality`,
-      value: JSON.stringify(snapshot.quality),
+      value: snapshot.quality,
     },
     {
       code: "STALE_DATA",
       active: Object.values(snapshot.staleFlag).some(Boolean),
       severity: "MEDIUM",
       message: `One or more OPC UA values are stale`,
-      value: JSON.stringify(snapshot.staleFlag),
+      value: snapshot.staleFlag,
     },
   ];
 
   for (const condition of conditions) {
-    const prev = alarmState[condition.code];
-    if (prev !== condition.active) {
-      alarmState[condition.code] = condition.active;
+    const stateKey = `${snapshot.machineId}:${condition.code}`;
+    const prev = alarmState[stateKey] ?? false;
+    if (prev === condition.active) {
+      continue;
     }
+    alarmState[stateKey] = condition.active;
     const alarm: AlarmPayload["alarm"] = {
       code: condition.code,
       severity: condition.severity,
@@ -76,8 +79,10 @@ export const buildAlarmTransition = (
     }
     alarms.push({
       timestamp: snapshot.edgeTimestamp,
+      opcTimestamp: snapshot.opcTimestamp,
       machineId: snapshot.machineId,
       messageType: "alarm",
+      source: "opcua",
       sequence: nextSequence(),
       alarm,
     });

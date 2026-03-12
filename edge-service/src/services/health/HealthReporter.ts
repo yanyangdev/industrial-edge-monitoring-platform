@@ -1,4 +1,4 @@
-import { logger } from "../../logger/index.ts";
+import { logger } from "../../logger/index.js";
 
 export type HealthSnapshot = {
   ts: string;

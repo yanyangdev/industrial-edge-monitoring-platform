@@ -14,19 +14,20 @@ import {
   type ClientMonitoredItemBase,
 } from "node-opcua-client";
 import "dotenv/config";
-import { config } from "../../config/index.ts";
+import { config } from "../../config/index.js";
 import type {
   SecurityModeString,
   SecurityPolicyString,
   Key,
-} from "../../config/index.ts";
-import type { OpcSnapshot, OpcUaValue } from "./types.ts";
-import { logger } from "../../logger/index.ts";
-import { AppError } from "../../errors/AppError.ts";
-import { HealthReport } from "../health/HealthReporter.ts";
-import { publishMachineData } from "../publishMachineData.ts";
-import { normalizeOpcSnapshot } from "./normalizer.ts";
-import { mqttConfig } from "../../config/mqtt.ts";
+} from "../../config/index.js";
+import type { OpcSnapshot, OpcUaValue } from "./types.js";
+import { logger } from "../../logger/index.js";
+// import { AppError } from "../../errors/AppError.js";
+import { HealthReport } from "../health/HealthReporter.js";
+import { publishMachineData } from "../publishMachineData.js";
+import { normalizeOpcSnapshot } from "./normalizer.js";
+import { mqttConfig } from "../../config/mqtt.js";
+import { mqttClient } from "../../mqtt/mqttClient.js";
 
 const securityModeMap: Record<SecurityModeString, MessageSecurityMode> = {
   None: MessageSecurityMode.None,
@@ -44,6 +45,7 @@ const securityPolicyMap: Record<SecurityPolicyString, SecurityPolicy> = {
 export class OpcuaEdgeService {
   private client = OPCUAClient.create({
     endpointMustExist: true,
+
     securityMode: securityModeMap[config.opcua.security.mode],
     securityPolicy: securityPolicyMap[config.opcua.security.policy],
     // 工业常用环境, SDK自己尝试重连
@@ -127,25 +129,42 @@ export class OpcuaEdgeService {
       if (!this.dirty) return;
 
       const now = Date.now();
-      const enrich = <T>(p: OpcUaValue<T>): OpcUaValue<T> => {
+      const staleThresholdMs = {
+        Temperature: 3000,
+        Vibration: 5000,
+        Status: 15000,
+        Error: 15000,
+      } as const;
+      const enrich = <T>(
+        k: keyof typeof staleThresholdMs,
+        p: OpcUaValue<T>,
+      ): OpcUaValue<T> => {
         const ageMs = p.sourceTimestamp
           ? now - p.sourceTimestamp.getTime()
           : null;
-        const stale = ageMs !== null ? ageMs > 3000 : true;
+        const stale = ageMs !== null ? ageMs > staleThresholdMs[k] : true;
         return { ...p, ageMs, stale };
       };
 
       const dataWithAge: OpcSnapshot = {
-        Temperature: enrich(this.latest.Temperature),
-        Vibration: enrich(this.latest.Vibration),
-        Status: enrich(this.latest.Status),
-        Error: enrich(this.latest.Error),
+        Temperature: enrich("Temperature", this.latest.Temperature),
+        Vibration: enrich("Vibration", this.latest.Vibration),
+        Status: enrich("Status", this.latest.Status),
+        Error: enrich("Error", this.latest.Error),
       };
+
       const ts = new Date().toISOString();
-      logger.info(
-        { ts, data: normalizeOpcSnapshot(ts, dataWithAge, mqttConfig.machine) },
-        "machine snapshot",
+      const normalized = normalizeOpcSnapshot(
+        ts,
+        dataWithAge,
+        mqttConfig.machine,
       );
+      logger.info({ ts, data: normalized }, "machine snapshot");
+      publishMachineData({
+        snapshot: normalized,
+        isConnectedOpc: this.connected,
+        isConnectedMqtt: mqttClient.connected,
+      });
       this.dirty = false;
     }, config.output.emitIntervalMs);
 
@@ -378,7 +397,6 @@ export class OpcuaEdgeService {
       { items: keys.map((k) => ({ k, nodeId: config.opcua.nodeIds[k] })) },
       "Monitoring Items in group",
     );
-    // publishMachineData(this.latest);
   }
 
   private async teardown(reason: string) {

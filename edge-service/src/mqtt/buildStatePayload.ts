@@ -1,6 +1,6 @@
-import type { NormalizeSnapshot } from "../services/opcua/types.ts";
-import type { StatePayload } from "../types/mqttPayload.ts";
-import { nextSequence } from "../utils/index.ts";
+import type { NormalizeSnapshot } from "../services/opcua/types.js";
+import type { StatePayload } from "../types/mqttPayload.js";
+import { nextSequence } from "../utils/index.js";
 
 export const buildStatePayload = (
   snapshot: NormalizeSnapshot,
@@ -9,8 +9,10 @@ export const buildStatePayload = (
 ): StatePayload => {
   return {
     timestamp: snapshot.edgeTimestamp,
+    opcTimestamp: snapshot.opcTimestamp,
     machineId: snapshot.machineId,
     messageType: "state",
+    source: "opcua",
     sequence: nextSequence(),
     data: {
       machineState: snapshot.machineState,

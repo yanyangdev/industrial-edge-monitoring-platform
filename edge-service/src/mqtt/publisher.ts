@@ -1,11 +1,11 @@
-import { mqttConfig } from "../config/mqtt.ts";
+import { mqttConfig } from "../config/mqtt.js";
 import type {
   AlarmPayload,
   StatePayload,
   TelemetryPayload,
-} from "../types/mqttPayload.ts";
-import { mqttClient } from "./mqttClient.ts";
-import { buildTopic } from "./topicBuilder.ts";
+} from "../types/mqttPayload.js";
+import { mqttClient } from "./mqttClient.js";
+import { buildTopic } from "./topicBuilder.js";
 
 export const publishTelemetry = (payload: TelemetryPayload) => {
   const topic = buildTopic("telemetry");

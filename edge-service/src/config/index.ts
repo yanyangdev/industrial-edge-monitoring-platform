@@ -1,5 +1,6 @@
-import type { NodeIds } from "../types/machine.ts";
+import type { NodeIds } from "../types/machine.js";
 import "dotenv/config";
+import { requiredEnv, toInt } from "../utils/index.js";
 export type SecurityModeString = "None" | "Sign" | "SignAndEncrypt";
 
 export type SecurityPolicyString =
@@ -7,19 +8,6 @@ export type SecurityPolicyString =
   | "Basic256Sha256"
   | "Aes128_Sha256_RsaOaep"
   | "Aes256_Sha256_RsaPss";
-
-function requiredEnv(name: string, fallback?: string): string {
-  const v = process.env[name] || fallback;
-  if (!v) throw new Error(`Missing required env: ${name}`);
-  return v;
-}
-
-function toInt(name: string, fallback: number): number {
-  const raw = process.env[name];
-  const n = raw ? Number(raw) : fallback;
-  if (!Number.isFinite(n)) throw new Error(`Invalid number env:${name}=${raw}`);
-  return n;
-}
 
 export const config = {
   opcua: {
@@ -52,7 +40,7 @@ export const config = {
     samplingIntervalMs: toInt("SAMPLING_INTERVAL_MS", 200),
     queueSize: toInt("SUB_QUEUE_SIZE", 10),
     requestedLifetimeCount: toInt("SUB_LIFETIME_COUNT", 600),
-    requestMaxKeepAliveCount: toInt("SUB_KEEPALIVE_COUNY", 20),
+    requestMaxKeepAliveCount: toInt("SUB_KEEPALIVE_COUNT", 20),
   },
 
   output: {

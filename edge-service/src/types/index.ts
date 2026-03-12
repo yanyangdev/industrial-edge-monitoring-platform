@@ -1,6 +1,6 @@
-export type { MachineData } from "./machine.ts";
+export type { MachineData } from "./machine.js";
 export type {
   TelemetryPayload,
   StatePayload,
   AlarmPayload,
-} from "./mqttPayload.ts";
+} from "./mqttPayload.js";

@@ -1,6 +1,6 @@
 import mqtt from "mqtt";
-import { mqttConfig } from "../config/mqtt.ts";
-import { logger } from "../logger/index.ts";
+import { mqttConfig } from "../config/mqtt.js";
+import { logger } from "../logger/index.js";
 
 export const mqttClient = mqtt.connect(mqttConfig.url, {
   reconnectPeriod: 3000,
@@ -9,11 +9,11 @@ export const mqttClient = mqtt.connect(mqttConfig.url, {
 });
 
 mqttClient.on("connect", () => {
-  logger.info("MQTT connected");
+  logger.info({ url: mqttConfig.url }, "MQTT connected");
 });
 
 mqttClient.on("reconnect", () => {
-  logger.info("MQTT reconnecting...");
+  logger.info({ url: mqttConfig.url }, "MQTT reconnecting...");
 });
 mqttClient.on("offline", () => {
   logger.info("MQTT offline");

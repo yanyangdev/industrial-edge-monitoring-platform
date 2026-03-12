@@ -1,6 +1,6 @@
-export { buildAlarmTransition } from "./buildAlarmTransition.ts";
-export { buildStatePayload } from "./buildStatePayload.ts";
-export { buildTelemetryPayload } from "./buildTelemetryPayload.ts";
-export { mqttClient } from "./mqttClient.ts";
-export { publishAlarm, publishState, publishTelemetry } from "./publisher.ts";
-export { buildTopic } from "./topicBuilder.ts";
+export { buildAlarmTransition } from "./buildAlarmTransition.js";
+export { buildStatePayload } from "./buildStatePayload.js";
+export { buildTelemetryPayload } from "./buildTelemetryPayload.js";
+export { mqttClient } from "./mqttClient.js";
+export { publishAlarm, publishState, publishTelemetry } from "./publisher.js";
+export { buildTopic } from "./topicBuilder.js";

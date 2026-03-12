@@ -1,6 +1,7 @@
+const mqttHost = process.env.MQTT_HOST || "localhost";
+const mqttPort = Number(process.env.MQTT_PORT || 1883);
 export const mqttConfig = {
-  url: "mqtt://localhost:1883",
-
+  url: `mqtt://${mqttHost}:${mqttPort}`,
   factory: "factory",
   site: "demo",
   line: "line1",
