@@ -11,7 +11,7 @@ export type SecurityPolicyString =
 
 export const config = {
   opcua: {
-    endpoint: requiredEnv("OPCUA_ENDPOINT"),
+    endpoint: requiredEnv("OPCUA_ENDPOINT", "opc.tcp://DESKTOP-RSBT72P:4840"),
     security: {
       mode: (process.env.OPCUA_SECURITY_MODE ??
         "SignAndEncrypt") as SecurityModeString,

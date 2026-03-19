@@ -316,7 +316,6 @@ export class OpcuaEdgeService {
 
     await this.createMonitoredItemGroup(sub);
 
-    this.dirty = false;
     logger.info("OPCUA pipeline ready");
   }
   private async createMonitoredItemGroup(sub: ClientSubscription) {
@@ -382,7 +381,6 @@ export class OpcuaEdgeService {
           };
           this.latestDataTs = new Date().toISOString();
           this.dirty = true;
-
           if (!isGood) {
             logger.warn(
               { key, nodeId, code: dv.statusCode?.toString() },

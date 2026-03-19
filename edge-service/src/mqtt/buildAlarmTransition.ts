@@ -2,13 +2,6 @@ import type { NormalizeSnapshot } from "../services/opcua/types.js";
 import type { AlarmCode, AlarmPayload } from "../types/mqttPayload.js";
 import { nextSequence } from "../utils/index.js";
 
-// 用于报警去重/状态反转
-// const alarmState: Record<AlarmCode, boolean> = {
-// HIGH_TEMP: false,
-// MACHINE_ERROR: false,
-// BAD_QUALITY: false,
-// STALE_DATA: false,
-// };
 const alarmState: Record<string, boolean> = {};
 const HIGH_TEMP_THRESHOLD = 80;
 
