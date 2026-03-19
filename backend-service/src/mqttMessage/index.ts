@@ -4,6 +4,7 @@ export type {
   StatePayload,
   TelemetryPayload,
 } from "./validator.js";
+export { alarmSchema, stateSchema, telemetrySchema } from "./validator.js";
 export { telemetryHandler } from "./telemetryHandler.js";
 export { stateHandler } from "./stateHandler.js";
 export { alarmHandler } from "./alarmHandler.js";

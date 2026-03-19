@@ -28,7 +28,7 @@ export const telemetrySchema = baseMessageSchema.extend({
     vibration: z.number().nullable(),
     machineState: z.string(),
     statusCode: z.number().nullable(),
-    error: z.number().nullable(),
+    error: z.boolean(),
     quality: qualitySchema,
     staleFlag: staleFlagSchema,
   }),
@@ -39,14 +39,14 @@ export const stateSchema = baseMessageSchema.extend({
   data: z.object({
     machineState: z.string(),
     statusCode: z.number().nullable(),
-    error: z.number().nullable(),
+    error: z.boolean(),
     isConnectedOpc: z.boolean(),
     isConnectedMqtt: z.boolean(),
   }),
 });
 export const alarmSchema = baseMessageSchema.extend({
   messageType: z.literal("alarm"),
-  data: z.object({
+  alarm: z.object({
     code: z.enum(["HIGH_TEMP", "MACHINE_ERROR", "BAD_QUALITY", "STALE_DATA"]),
     severity: z.enum(["HIGH", "CRITICAL", "MEDIUM"]),
     message: z.string(),
