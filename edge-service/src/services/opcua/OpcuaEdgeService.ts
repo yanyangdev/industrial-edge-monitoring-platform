@@ -14,20 +14,20 @@ import {
   type ClientMonitoredItemBase,
 } from "node-opcua-client";
 import "dotenv/config";
-import { config } from "../../config/index.js";
-import type {
-  SecurityModeString,
-  SecurityPolicyString,
-  Key,
-} from "../../config/index.js";
-import type { OpcSnapshot, OpcUaValue } from "./types.js";
-import { logger } from "../../logger/index.js";
+
+import type { SecurityModeString, SecurityPolicyString, Key } from "#config";
+import {
+  normalizeOpcSnapshot,
+  type OpcSnapshot,
+  type OpcUaValue,
+} from "#services/opcua";
+import { config } from "#config";
+import { logger } from "#logger";
 // import { AppError } from "../../errors/AppError.js";
-import { HealthReport } from "../health/HealthReporter.js";
+import { HealthReport } from "../health/index.js";
 import { publishMachineData } from "../publishMachineData.js";
-import { normalizeOpcSnapshot } from "./normalizer.js";
-import { mqttConfig } from "../../config/mqtt.js";
-import { mqttClient } from "../../mqtt/mqttClient.js";
+import { mqttConfig } from "#config";
+import { mqttClient } from "#mqtt";
 
 const securityModeMap: Record<SecurityModeString, MessageSecurityMode> = {
   None: MessageSecurityMode.None,

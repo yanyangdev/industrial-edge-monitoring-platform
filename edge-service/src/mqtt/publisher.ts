@@ -1,4 +1,4 @@
-import { mqttConfig } from "../config/mqtt.js";
+import { mqttConfig } from "#config";
 import type {
   AlarmPayload,
   StatePayload,

@@ -1,6 +1,6 @@
-import type { NormalizeSnapshot } from "../services/opcua/types.js";
-import type { StatePayload } from "../types/mqttPayload.js";
-import { nextSequence } from "../utils/index.js";
+import { nextSequence } from "#mqtt";
+import type { NormalizeSnapshot } from "#services/opcua";
+import type { StatePayload } from "#types";
 
 export const buildStatePayload = (
   snapshot: NormalizeSnapshot,

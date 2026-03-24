@@ -1,6 +1,6 @@
+import { mqttConfig } from "#config";
+import { logger } from "#logger";
 import mqtt from "mqtt";
-import { mqttConfig } from "../config/mqtt.js";
-import { logger } from "../logger/index.js";
 
 export const mqttClient = mqtt.connect(mqttConfig.url, {
   reconnectPeriod: 3000,

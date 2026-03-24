@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node  --env-file=.env --loader ts-node/esm src/app.ts",
     "dev:pretty": "node --env-file=./.env --loader ts-node/esm src/app.ts | npx pino-pretty -t -c",
-    "prebuild": "rm -rf dist",
+    "prebuild": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/app.js"
   },
@@ -30,6 +30,12 @@
   "overrides": {
     "@peculiar/x509": {
       "typescript": "^5.0.0"
+    }
+  },
+  "imports": {
+    "#*": {
+      "development": "./src/*/index.ts",
+      "default": "./dist/*/index.js"
     }
   }
 }

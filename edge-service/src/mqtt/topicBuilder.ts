@@ -1,4 +1,4 @@
-import { mqttConfig } from "../config/mqtt.js";
+import { mqttConfig } from "#config";
 
 export const buildTopic = (type: "telemetry" | "state" | "alarm") => {
   const { factory, site, line, cell, machine } = mqttConfig;

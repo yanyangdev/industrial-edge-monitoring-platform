@@ -1,6 +1,6 @@
-import type { NormalizeSnapshot } from "../services/opcua/types.js";
-import type { AlarmCode, AlarmPayload } from "../types/mqttPayload.js";
-import { nextSequence } from "../utils/index.js";
+import { nextSequence } from "#mqtt";
+import type { NormalizeSnapshot } from "#services/opcua";
+import type { AlarmPayload, AlarmCode } from "#types";
 
 const alarmState: Record<string, boolean> = {};
 const HIGH_TEMP_THRESHOLD = 80;

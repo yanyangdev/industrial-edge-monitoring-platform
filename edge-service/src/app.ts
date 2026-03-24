@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { OpcuaEdgeService } from "./services/opcua/OpcuaEdgeService.js";
-import { logger } from "./logger/index.js";
+import { OpcuaEdgeService } from "#services/opcua";
+import { logger } from "#logger";
 
 async function main() {
   const opcua = new OpcuaEdgeService();
