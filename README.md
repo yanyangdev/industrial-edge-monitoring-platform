@@ -78,7 +78,7 @@ PostgreSQL → React Dashboard
 ## Current Status
 
 - - [x] 1: PLC + OPC UA + Edge
-- - [ ] 2: MQTT distributed architecture
+- - [x] 2: MQTT distributed architecture
 - - [ ] 3: Database + REST + Docker
 - - [ ] 4: Real-time dashboard + KPI + stability test
 
