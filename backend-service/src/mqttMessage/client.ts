@@ -11,6 +11,7 @@ import {
   alarmHandler,
   telemetryHandler,
   getMessageTypeFromTopic,
+  checkSequence,
 } from "#mqttMessage";
 
 export const startMqttSubscriber = () => {
@@ -76,6 +77,9 @@ export const startMqttSubscriber = () => {
           );
           return;
         }
+        const { machineId, sequence, source } = result.data;
+
+        checkSequence({ machineId, sequence, source, topic });
         telemetryHandler(result.data, topic);
         break;
       }
@@ -91,6 +95,9 @@ export const startMqttSubscriber = () => {
           );
           return;
         }
+        const { machineId, sequence, source } = result.data;
+
+        checkSequence({ machineId, sequence, source, topic });
         stateHandler(result.data, topic);
         break;
       }
@@ -106,6 +113,8 @@ export const startMqttSubscriber = () => {
           );
           return;
         }
+        const { machineId, sequence, source } = result.data;
+        checkSequence({ machineId, sequence, source, topic });
         alarmHandler(result.data, topic);
         break;
       }

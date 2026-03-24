@@ -9,3 +9,4 @@ export { telemetryHandler } from "./telemetryHandler.js";
 export { stateHandler } from "./stateHandler.js";
 export { alarmHandler } from "./alarmHandler.js";
 export { startMqttSubscriber } from "./client.js";
+export { checkSequence } from "./sequenceTracker.js";

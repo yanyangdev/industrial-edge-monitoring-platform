@@ -15,7 +15,7 @@ export const telemetryHandler = (
       opcTimestamp: message.opcTimestamp,
       temperature: message.data.temperature,
       vibration: message.data.vibration,
-      statuesCode: message.data.statusCode,
+      statusCode: message.data.statusCode,
       error: message.data.error,
       quality: message.data.quality,
       staleFlag: message.data.staleFlag,
